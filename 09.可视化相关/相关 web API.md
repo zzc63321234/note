@@ -1,0 +1,156 @@
+## `requestAnimationFrame`
+
+- 浏览器提供的 `requestAnimationFrame` 方法被设计用来创建高效率的 `JavaScript` 动画
+- 接收一个回调函数作为参数
+  - 这个回调函数会在屏幕下一次刷新（比如 `60Hz` 刷新率的屏幕，一秒就会执行 `60` 次该回调函数）之前被执行
+  - 浏览器会传递 `DOMHighResTimeStamp` 作为参数给该回调函数
+    - `DOMHighResTimeStamp` 是一个由 `High Resolution Time API` 提供的数据类型，表示一个以毫秒为单位的时间值
+    - 精度可以达到微秒级（`1ms` 的百万分之一）
+    - 在 `requestAnimationFrame` 的上下文中，传递给回调函数的 `DOMHighResTimeStamp` 参数表示的是从文档开始加载到执行该回调函数时的经过时间
+    - 该时间戳类似于调用 `performance.now()` 得到的返回值
+    - 可以使用这个时间戳来计算动画的进度
+- 执行后会返回一个请求 `ID`
+  - 它是一个非零整数，是当前动画帧请求的唯一标识
+  - 可以传递此 `ID` 给 `cancelAnimationFrame` 方法以取消动画帧请求
+
+## `ResizeObserver`
+
+- `Resize Observer API` 能够观察和响应 `Element` 内容盒或边框盒，或者 `SVGElement` 边框尺寸的变化，并以高效的方式做出响应
+- `ResizeObserver` 构造函数
+  - 用于创建一个新的 `ResizeObserver` 实例对象
+  - 接收一个 `callback` 参数
+    - 每当观测的元素调整大小时，该函数会被调用
+    - 该函数接收两个参数
+      - `entries`
+        - 一个 `ResizeObserverEntry` 对象数组
+        - `ResizeObserverEntry` 对象可以用于获取每个元素改变后的新尺寸
+      - `observer`
+        - 对 `ResizeObserver` 实例对象的引用
+- `ResizeObserver` 实例对象的方法
+  - `observe(target[, options])`
+    - 用于监听指定的 `Element` 或 `SVGElement`
+    - 接收参数
+      - `target`
+        - 对要监听的 `Element` 或 `SVGElement` 的引用
+      - `options`（可选）
+        - 一个参数对象，允许为监听的对象设置参数
+        - 目前只有 `box` 一个字段，用于在监听 `Element` 时指定 `observer` 将监听的盒模型，可选值有：
+          - `'content-box'`（默认值）
+            - `CSS` 中定义的内容区域的大小
+          - `'border-box'`
+            - `CSS` 中定义的边框区域的大小
+          - `'device-pixel-content-box'`
+            - 在对元素或其祖先引用任何 `CSS` 转换之前，`CSS` 中定义的内容区域的大小，以设备像素为单位
+  - `unobverse(target)`
+    - 结束对指定的 `Element` 或 `SVGElement` 的监听
+    - 接收 `target` 参数，即对要取消监听的 `Element` 或 `SVGElement` 的引用
+  - `disconnect()`
+    - 取消对所有的 `Element` 或 `SVGElement` 的监听
+- `ResizeObserverEntry` 对象
+  - `ResizeObserverEntry` 对象就是传递给 `ResizeObserver` 构造函数中的回调函数参数的数组中的对象，可以用来获取正在观察的 `Element` 或 `SVGElement` 最新的大小
+  - 属性
+    - `borderBoxSize`
+      - 值为一个数组，包含被监听元素的边框盒大小的对象
+      - `borderBoxSize` 和 `contentBoxSize` 为什么是数组
+        - 因为 `CSS` 规范允许元素具有多个盒模型
+        - 在实际应用中，大多数元素只有一个盒模型，因此 `borderBoxSize`  和 `contentBoxSize` 数组通常只包含一个元素
+        - 为了完全兼容可能出现的多盒模型情况，`borderBoxSize` 和 `contentBoxSize` 被设计为一个数组，使得能够处理复杂布局场景中元素的尺寸变化
+      - 数组中对象的属性
+        - `blockSize`
+          - 被监听的元素在块方向上的长度
+          - 对于具有水平 `writing-mode` 的盒子，这是垂直尺寸或者高度
+          - 如果 `writing-mode` 是垂直的，这是水平的尺寸或者宽度
+        - `inlineSize`
+          - 被监听的元素在内联方向上的长度
+          - 对于具有水平 `writing-mode` 的盒子，这是水平尺寸或者宽度
+          - 如果 `writing-mode` 是垂直的，这是垂直的尺寸或者高度
+    - `contentBoxSize`
+      - 值为一个数组，包含被监听元素的内容盒大小的对象
+      - 数组中对象的属性于 `borderBoxSize` 中的相同
+    - `contentRect`
+      - 值为一个包含被监听元素大小的 `DOMRectReadOnly` 对象，包含属性 `width` 和 `height`
+        - 如果 `target` 是一个 `HTML Element`，则  `contentRect` 值是元素的内容盒
+        - 如果 `target` 是一个 `SVGElement`，则 `contentRect` 是 `SVG` 的边界框
+      - 该属性是在 `Resize Observer API` 早期实现遗留下来的，比 `borderBoxSize` 和 `cotentBoxSize` 有着更好的兼容性，在未来的版本中可能被弃用
+    - `devicePixelContentBoxSize`
+      - 值为一个数组，包含被监听元素的设备像素大小
+      - 数组中对象的属性于 `borderBoxSize` 中的相同
+    - `target`
+      - 值为正在被监听的 `Element` 或 `SVGElement` 的引用
+
+## `DOMRect`
+
+- 一个 `DOMRect` 代表一个矩形
+- 其属性继承自 `DOMRectReadOnly`，区别是它们不再是只读的
+  - `x`
+  - `y`
+  - `width`
+  - `height`
+  - `top`
+  - `right`
+  - `bottom`
+  - `left`
+- `DOMRect` 构造函数
+  - 接收参数
+    - `x`
+    - `y`
+    - `width`
+    - `height`
+  - 生成一个新的 `DOMRect` 实例对象
+- 其它创建 `DOMRect` 的方式
+  - `Element.getBoundingClientRect()`
+    - 返回一个 `DOMRect` 对象，其提供了元素的大小及其相对于视口的位置
+
+## `CSSStyleDeclaration`
+
+- `CSSStyleDeclaration` 接口表示一个对象，它是一个 `CSS` 声明块，`CSS` 属性键值对的集合
+- `CSSStyleDeclaration` 对象可被暴露于三种不同的 `API` 下：
+  - `HTMLElement.style`
+    - 用于操作单个元素的样式（内联样式）
+  - `CSSStyleSheet API`
+    - 比如 ，`document.styleSheets[0].cssRules[0].style` 会返回文档中第一个样式表中的第一条 `CSS` 规则
+  - `Window.getComputedStyle(element[, pseudoElt])`
+    - 返回一个只读的 `CSSStyleDeclaration` 对象
+    - 接收参数
+      - `element`
+        - 获取计算样式的 `Element`
+      - `pseudoEle`（可选）
+        - 指定一个要匹配的伪元素字符串
+- `CSSStyleDeclaration` 对象的常用方法
+  - `getPropertyPriority(property)`
+    - 用于检测 `CSS` 属性的优先级
+    - 接收 `property` 字符串作为参数，表示要检查的属性名
+    - 返回一个 `priority` 字符串，表示属性优先级
+      - 如果优先，则返回 `'important'`
+      - 如果不优先，则返回空字符串
+  - `getPropertyValue(property)`
+    - 用于查询 `CSS` 属性的值
+    - 接收 `property` 字符串作为参数，表示要查询的属性名
+    - 返回一个 `value` 字符串，表示查询的属性的值，如果对应属性没有值，则返回空字符串
+  - `removeProperty(property)`
+    - 用于移除 `CSSStyleDeclaration` 对象的一个属性
+    - 接收 `property` 字符串作为参数，表示要移除的属性名
+    - 返回一个 `oldValue` 字符串，表示被移除的属性在移除前的值
+  - `setProperty(property[, value][, priority])`
+    - 用于为一个声明了 `CSS` 样式的对象设置一个新的值
+    - 接收参数
+      - `property`
+        - 一个字符串，代表被更改的 `CSS` 属性
+      - `value`（可选）
+        - 一个字符串，代表新的属性值
+        - 如果没有指定，则当作空字符串
+      - `priority`（可选）
+        - 允许设置 `'important'` 来表示优先级
+        - 如果没有指定，则当作空字符串
+
+## 关于 `CSS transition`
+
+- 以下实验结果基于 `chrome` 浏览器
+  - 如果元素正处于 `transition` 过程中，如果应用了过渡的属性发生了变化，之前的过渡被取消，触发 `transitioncancel` 事件，新的过渡发起，触发 `transitionrun` 和 `transitionstart` 事件，元素会从当前（过渡被取消时的这一时刻）的状态转变为新的状态，过渡时长会从当前开始重新计算，如果过渡完成，则触发 `transitionend` 事件
+  - 如果元素正处于 `transition` 过程中，如果应用了过渡的属性发生了变化，且 `transition` 属性值被删除，那么元素会立即被设置成新的状态，且触发 `transitioncancel` 事件
+  - 由上可知，过渡被打断不会触发 `transitionend` 事件，只有过渡完整地执行才会触发
+- 相关事件
+  - `transitionrun` 过渡将要开始前
+  - `transitionstart` 过渡开始时
+  - `transitioncancel` 过渡被取消
+  - `transitionend` 过渡完成

@@ -1,0 +1,2 @@
+- String.fromCharCode(...num[])
+- String.prototype.charCodeAt(index)
